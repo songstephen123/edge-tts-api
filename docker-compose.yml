@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  edge-tts-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edge-tts-service
+    ports:
+      - "${SERVICE_PORT:-8000}:8000"
+    environment:
+      - SERVICE_PORT=8000
+      - SERVICE_HOST=0.0.0.0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - DEFAULT_VOICE=${DEFAULT_VOICE:-zh-CN-XiaoxiaoNeural}
+      - DEFAULT_RATE=${DEFAULT_RATE:-+0%}
+      - DEFAULT_PITCH=${DEFAULT_PITCH:-+0Hz}
+      - DEFAULT_VOLUME=${DEFAULT_VOLUME:-+0%}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
