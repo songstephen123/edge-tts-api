@@ -16,7 +16,7 @@ from typing import Optional
 from app.models.schemas import TTSRequest
 from app.services.tts_manager import TTSManager, TTSAllFailedError
 from app.services.tts_providers.edge_tts_provider import EdgeTTSProvider
-from app.services.tts_providers.local_provider import LocalTTSProvider
+# from app.services.tts_providers.local_provider import LocalTTSProvider  # 暂时禁用：需要 pyttsx3
 from app.services.opus_converter import (
     convert_to_opus_streaming_fast,
     convert_to_opus_with_cache,
@@ -35,7 +35,7 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 # 初始化 TTS Manager（使用配置）
 tts_manager = TTSManager(config=tts_config)
 tts_manager.register_provider(EdgeTTSProvider())
-tts_manager.register_provider(LocalTTSProvider())
+# tts_manager.register_provider(LocalTTSProvider())  # 暂时禁用：需要 pyttsx3
 
 
 async def convert_to_opus(mp3_data: bytes) -> bytes:

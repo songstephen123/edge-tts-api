@@ -1,29 +1,25 @@
 """
 TTS 配置
 """
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
 
 
-class TTSConfig(BaseSettings):
+class TTSConfig:
     """TTS 引擎配置"""
 
-    # 引擎配置
-    primary_provider: str = "edge-tts"
-    fallback_providers: list[str] = ["local"]
+    def __init__(self):
+        # 引擎配置
+        self.primary_provider: str = os.getenv("TTS_PRIMARY_PROVIDER", "edge-tts")
+        self.fallback_providers: list[str] = os.getenv("TTS_FALLBACK_PROVIDERS", "local").split(",")
 
-    # 重试配置
-    max_retries: int = 2
-    retry_delay: float = 0.5
+        # 重试配置
+        self.max_retries: int = int(os.getenv("TTS_MAX_RETRIES", "2"))
+        self.retry_delay: float = float(os.getenv("TTS_RETRY_DELAY", "0.5"))
 
-    # 故障切换
-    failure_threshold: int = 5
-    cooldown_seconds: int = 300
+        # 故障切换
+        self.failure_threshold: int = int(os.getenv("TTS_FAILURE_THRESHOLD", "5"))
+        self.cooldown_seconds: int = int(os.getenv("TTS_COOLDOWN_SECONDS", "300"))
 
-    # 缓存配置
-    enable_cache: bool = True
-    cache_ttl: int = 86400  # 24 小时
-
-    model_config = SettingsConfigDict(
-        env_prefix="TTS_",
-        env_file=".env"
-    )
+        # 缓存配置
+        self.enable_cache: bool = os.getenv("TTS_ENABLE_CACHE", "true").lower() == "true"
+        self.cache_ttl: int = int(os.getenv("TTS_CACHE_TTL", "86400"))
