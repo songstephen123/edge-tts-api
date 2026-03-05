@@ -6,6 +6,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse, FileResponse
 import logging
 import os
+import io
+import asyncio
+import tempfile
 import uuid
 from datetime import datetime
 
@@ -160,7 +163,7 @@ async def text_to_speech(req: TTSRequest):
         media_type = "audio/opus" if output_format == 'opus' else "audio/mpeg"
 
         return StreamingResponse(
-            asyncio.BytesIO(audio_data),
+            io.BytesIO(audio_data),
             media_type=media_type,
             headers={
                 "Content-Disposition": f"attachment; filename={filename}",
