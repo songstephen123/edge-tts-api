@@ -35,14 +35,27 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ### Docker 部署（推荐）
 
-```bash
-# 本地测试
-docker-compose up -d
+#### 服务器部署
 
-# 或部署到服务器
-scp -r . root@115.190.252.250:/opt/edge-tts-service-docker/
+```bash
+# 1. SSH 登录服务器
 ssh root@115.190.252.250
+
+# 2. 安装 Docker（首次部署）
+bash <(curl -fsSL https://raw.githubusercontent.com/songstephen123/edge-tts-api/main/scripts/install-docker-server.sh)
+
+# 3. 下载项目
+git clone https://github.com/songstephen123/edge-tts-api.git /opt/edge-tts-service-docker
 cd /opt/edge-tts-service-docker
+
+# 4. 启动服务
+docker-compose up -d
+```
+
+#### 本地测试
+
+```bash
+cd ~/edge-tts-skill
 docker-compose up -d
 ```
 

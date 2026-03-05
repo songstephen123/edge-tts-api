@@ -35,21 +35,34 @@ open http://localhost:8000/docs
 
 ### 方案 B：服务器 Docker 部署
 
-#### 第一步：准备文件
+#### 第一步：安装 Docker
 
 ```bash
-# 压缩项目
+# SSH 登录服务器
+ssh root@115.190.252.250
+
+# 下载并运行 Docker 安装脚本
+mkdir -p ~/scripts
+curl -fsSL https://raw.githubusercontent.com/songstephen123/edge-tts-api/main/scripts/install-docker-server.sh -o ~/scripts/install-docker.sh
+chmod +x ~/scripts/install-docker.sh
+bash ~/scripts/install-docker.sh
+```
+
+#### 第二步：准备文件
+
+```bash
+# 在本地压缩项目
 cd ~/edge-tts-skill
 tar -czf edge-tts-docker.tar.gz . --exclude='.git' --exclude='__pycache__' --exclude='*.pyc'
 ```
 
-#### 第二步：上传到服务器
+#### 第三步：上传到服务器
 
 ```bash
 scp edge-tts-docker.tar.gz root@115.190.252.250:/root/
 ```
 
-#### 第三步：SSH 并部署
+#### 第四步：SSH 并部署
 
 ```bash
 ssh root@115.190.252.250
