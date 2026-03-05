@@ -68,6 +68,13 @@ app.include_router(health.router, prefix="/health", tags=["健康检查"])
 app.include_router(tts.router, prefix="/tts", tags=["文本转语音"])
 app.include_router(voices.router, prefix="/voices", tags=["音色管理"])
 
+# 添加静态文件服务（用于音频文件）
+from fastapi.staticfiles import StaticFiles
+import os
+STATIC_DIR = "/tmp/tts_audio"
+os.makedirs(STATIC_DIR, exist_ok=True)
+app.mount("/static/audio", StaticFiles(directory=STATIC_DIR), name="audio")
+
 
 # 根路径
 @app.get("/")

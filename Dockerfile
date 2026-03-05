@@ -9,9 +9,11 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# 安装系统依赖
+# 安装系统依赖（包括 FFmpeg 和 opus-tools）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    ffmpeg \
+    opus-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
@@ -22,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
 COPY app/ ./app/
+
+# 创建缓存目录
+RUN mkdir -p /tmp/tts_audio /tmp/tts_cache
 
 # 暴露端口
 EXPOSE 8000

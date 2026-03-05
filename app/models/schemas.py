@@ -12,6 +12,7 @@ class TTSRequest(BaseModel):
     rate: Optional[str] = Field("+0%", description="语速，例如: +10%, -20%")
     pitch: Optional[str] = Field("+0Hz", description="音调，例如: +10Hz, -5Hz")
     volume: Optional[str] = Field("+0%", description="音量，例如: +10%, -50%")
+    format: Optional[str] = Field("mp3", description="输出格式: mp3 或 opus")
 
     @field_validator("voice")
     @classmethod

@@ -33,9 +33,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Docker 部署
+### Docker 部署（推荐）
 
 ```bash
+# 本地测试
+docker-compose up -d
+
+# 或部署到服务器
+scp -r . root@115.190.252.250:/opt/edge-tts-service-docker/
+ssh root@115.190.252.250
+cd /opt/edge-tts-service-docker
 docker-compose up -d
 ```
 

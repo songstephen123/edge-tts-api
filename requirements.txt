@@ -9,6 +9,7 @@ edge-tts==6.1.12
 # Utilities
 python-multipart==0.0.12
 python-dotenv==1.0.1
+aiofiles==24.1.0
 
 # Optional: monitoring
 prometheus-client==0.21.0

@@ -8,6 +8,11 @@ services:
     container_name: edge-tts-service
     ports:
       - "${SERVICE_PORT:-8000}:8000"
+    volumes:
+      # 挂载缓存目录（持久化缓存）
+      - tts_cache:/tmp/tts_cache
+      # 挂载音频输出目录
+      - tts_audio:/tmp/tts_audio
     environment:
       - SERVICE_PORT=8000
       - SERVICE_HOST=0.0.0.0
@@ -21,6 +26,11 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
       interval: 30s
-      timeout: 10s
+           timeout: 10s
       retries: 3
       start_period: 5s
+volumes:
+  tts_cache:
+    driver: local
+  tts_audio:
+    driver: local
