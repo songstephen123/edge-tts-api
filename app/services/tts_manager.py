@@ -5,9 +5,12 @@ import asyncio
 import logging
 import time
 from collections import defaultdict
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 
 from app.services.tts_providers.base import TTSProvider, TTSResult, TTSProviderError
+
+if TYPE_CHECKING:
+    from app.config.tts_config import TTSConfig
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +23,22 @@ class TTSAllFailedError(TTSProviderError):
 class TTSManager:
     """TTS 引擎管理器"""
 
-    def __init__(self):
+    def __init__(self, config: Optional["TTSConfig"] = None):
+        """初始化 TTS 管理器
+
+        Args:
+            config: TTS 配置对象，如果为 None 则使用默认值
+        """
         self._providers: List[TTSProvider] = []
         self._failure_counts: defaultdict[str, int] = defaultdict(int)
         self._disabled_until: dict[str, float] = {}
-        self._failure_threshold = 5
-        self._cooldown_seconds = 300
+        # 使用配置或默认值
+        if config:
+            self._failure_threshold = config.failure_threshold
+            self._cooldown_seconds = config.cooldown_seconds
+        else:
+            self._failure_threshold = 5
+            self._cooldown_seconds = 300
 
     def register_provider(self, provider: TTSProvider) -> None:
         """注册 TTS 提供者

@@ -9,11 +9,15 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# 安装系统依赖（包括 FFmpeg 和 opus-tools）
+# 安装系统依赖（包括 FFmpeg、opus-tools 和 espeak）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
     opus-tools \
+    espeak \
+    espeak-data \
+    libespeak1 \
+    libespeak-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件

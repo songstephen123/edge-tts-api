@@ -12,6 +12,7 @@ from app.services.tts_providers.base import (
     TTSResult,
     TTSProviderError
 )
+from app.config.tts_config import TTSConfig
 
 
 class MockSuccessProvider(TTSProvider):
@@ -119,6 +120,23 @@ def test_tts_manager_initialization():
     assert manager.get_providers() == []
     assert manager.get_stats()["total_providers"] == 0
     assert manager.get_stats()["available_providers"] == 0
+
+
+def test_tts_manager_with_config():
+    """Test TTSManager initialization with config"""
+    config = TTSConfig(failure_threshold=10, cooldown_seconds=600)
+    manager = TTSManager(config=config)
+
+    assert manager._failure_threshold == 10
+    assert manager._cooldown_seconds == 600
+
+
+def test_tts_manager_without_config():
+    """Test TTSManager initialization without config uses defaults"""
+    manager = TTSManager()
+
+    assert manager._failure_threshold == 5
+    assert manager._cooldown_seconds == 300
 
 
 def test_register_providers():

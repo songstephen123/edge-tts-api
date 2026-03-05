@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 # 加载 .env 文件
 load_dotenv()
 
+# 导入 TTS 配置
+from app.config.tts_config import TTSConfig
+
 
 class Settings:
     """应用配置"""
@@ -53,3 +56,4 @@ class Settings:
 
 
 settings = Settings()
+tts_config = TTSConfig()
