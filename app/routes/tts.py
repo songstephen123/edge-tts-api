@@ -11,9 +11,11 @@ import asyncio
 import tempfile
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from app.models.schemas import TTSRequest
-from app.services.edge_tts import tts_service
+from app.services.tts_manager import TTSManager, TTSAllFailedError
+from app.services.tts_providers.edge_tts_provider import EdgeTTSProvider
 from app.services.opus_converter import (
     convert_to_opus_streaming_fast,
     convert_to_opus_with_cache,
@@ -28,6 +30,10 @@ router = APIRouter()
 # 静态文件存储目录
 STATIC_DIR = "/tmp/tts_audio"
 os.makedirs(STATIC_DIR, exist_ok=True)
+
+# 初始化 TTS Manager
+tts_manager = TTSManager()
+tts_manager.register_provider(EdgeTTSProvider())
 
 
 async def convert_to_opus(mp3_data: bytes) -> bytes:
@@ -125,6 +131,7 @@ async def text_to_speech(req: TTSRequest):
     - **voice**: 音色 ID 或简称（可选）
     - **rate**: 语速（可选）
     - **format**: 输出格式，支持 mp3/opus（可选，默认 mp3）
+    - **force_provider**: 强制使用指定的 TTS 提供者（可选）
     """
     try:
         # 获取输出格式
@@ -137,14 +144,18 @@ async def text_to_speech(req: TTSRequest):
 
         logger.info(f"TTS 请求: text='{req.text[:50]}...', voice={voice}, format={output_format}")
 
-        # 生成语音（默认 MP3）
-        mp3_data = await tts_service.text_to_speech(
+        # 使用 TTS Manager 生成语音（支持多引擎和降级）
+        result = await tts_manager.text_to_speech(
             text=req.text,
             voice=voice,
             rate=getattr(req, 'rate', '+0%'),
             pitch=getattr(req, 'pitch', '+0Hz'),
-            volume=getattr(req, 'volume', '+0%')
+            volume=getattr(req, 'volume', '+0%'),
+            force_provider=getattr(req, 'force_provider', None)
         )
+
+        # 提取音频数据
+        mp3_data = result.audio_data
 
         # 如果需要 Opus 格式，使用优化转换器
         if output_format == 'opus':
@@ -170,10 +181,18 @@ async def text_to_speech(req: TTSRequest):
                 "Content-Length": str(len(audio_data)),
                 "X-Audio-Filename": filename,
                 "X-Audio-Format": output_format,
-                "Access-Control-Expose-Headers": "X-Audio-Filename,X-Audio-Format,Content-Length"
+                "X-TTS-Provider": result.provider,
+                "X-TTS-Cached": str(result.cached).lower() if hasattr(result, 'cached') else "false",
+                "Access-Control-Expose-Headers": "X-Audio-Filename,X-Audio-Format,X-TTS-Provider,X-TTS-Cached,Content-Length"
             }
         )
 
+    except TTSAllFailedError as e:
+        logger.error(f"所有 TTS 引擎均失败: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=503,
+            detail=f"所有 TTS 引擎均不可用: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"TTS 生成失败: {e}", exc_info=True)
         raise HTTPException(
@@ -207,14 +226,17 @@ async def text_to_speech_url(req: TTSRequest):
 
         logger.info(f"TTS URL 请求: text='{req.text[:50]}...', voice={voice}, format={output_format}")
 
-        # 生成语音
-        audio_data = await tts_service.text_to_speech(
+        # 使用 TTS Manager 生成语音
+        result = await tts_manager.text_to_speech(
             text=req.text,
             voice=voice,
             rate=getattr(req, 'rate', '+0%'),
             pitch=getattr(req, 'pitch', '+0Hz'),
-            volume=getattr(req, 'volume', '+0%')
+            volume=getattr(req, 'volume', '+0%'),
+            force_provider=getattr(req, 'force_provider', None)
         )
+
+        audio_data = result.audio_data
 
         # 转换为 Opus（如果需要）
         if output_format == 'opus':
@@ -234,9 +256,16 @@ async def text_to_speech_url(req: TTSRequest):
             "format": output_format,
             "text": req.text,
             "text_length": len(req.text),
-            "voice_used": voice
+            "voice_used": voice,
+            "provider": result.provider
         }
 
+    except TTSAllFailedError as e:
+        logger.error(f"所有 TTS 引擎均失败: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=503,
+            detail=f"所有 TTS 引擎均不可用: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"TTS URL 生成失败: {e}", exc_info=True)
         raise HTTPException(
@@ -249,10 +278,11 @@ async def text_to_speech_url(req: TTSRequest):
 async def test_tts():
     """测试端点 - 返回一个简单的测试音频"""
     try:
-        mp3_data = await tts_service.text_to_speech(
+        result = await tts_manager.text_to_speech(
             text="你好，Edge TTS 服务运行正常！",
             voice="zh-CN-XiaoxiaoNeural"
         )
+        mp3_data = result.audio_data
 
         # 转换为 Opus（使用优化转换器）
         opus_data = await convert_to_opus_with_cache(
@@ -262,10 +292,19 @@ async def test_tts():
         )
 
         return StreamingResponse(
-            asyncio.BytesIO(opus_data),
-            media_type="audio/opus"
+            io.BytesIO(opus_data),
+            media_type="audio/opus",
+            headers={
+                "X-TTS-Provider": result.provider,
+                "Access-Control-Expose-Headers": "X-TTS-Provider"
+            }
         )
 
+    except TTSAllFailedError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"所有 TTS 引擎均不可用: {str(e)}"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -303,14 +342,16 @@ async def feishu_tts(req: TTSRequest):
 
         logger.info(f"飞书 TTS 请求: text='{req.text[:50]}...', voice={voice}")
 
-        # 生成语音（MP3）
-        mp3_data = await tts_service.text_to_speech(
+        # 使用 TTS Manager 生成语音
+        result = await tts_manager.text_to_speech(
             text=req.text,
             voice=voice,
             rate=getattr(req, 'rate', '+0%'),
             pitch=getattr(req, 'pitch', '+0Hz'),
-            volume=getattr(req, 'volume', '+0%')
+            volume=getattr(req, 'volume', '+0%'),
+            force_provider=getattr(req, 'force_provider', None)
         )
+        mp3_data = result.audio_data
 
         # 使用优化转换器转换为 Opus（带缓存）
         opus_data = await convert_to_opus_with_cache(
@@ -340,12 +381,40 @@ async def feishu_tts(req: TTSRequest):
             "text_length": len(req.text),
             "voice_used": voice,
             "cached": is_cached,
-            "format": "opus"
+            "format": "opus",
+            "provider": result.provider
         }
 
+    except TTSAllFailedError as e:
+        logger.error(f"所有 TTS 引擎均失败: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=503,
+            detail=f"所有 TTS 引擎均不可用: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"飞书 TTS 失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"飞书语音生成失败: {str(e)}"
         )
+
+
+@router.get("/providers")
+async def list_providers():
+    """列出可用的 TTS 引擎"""
+    return {
+        "providers": [
+            {
+                "name": p.name,
+                "is_free": p.is_free,
+                "priority": p.priority,
+            }
+            for p in tts_manager.get_providers()
+        ]
+    }
+
+
+@router.get("/stats")
+async def get_stats():
+    """获取 TTS 引擎统计信息"""
+    return tts_manager.get_stats()
