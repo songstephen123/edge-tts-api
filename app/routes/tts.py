@@ -420,3 +420,12 @@ async def list_providers():
 async def get_stats():
     """获取 TTS 引擎统计信息"""
     return tts_manager.get_stats()
+
+
+@router.get("/metrics")
+async def get_metrics():
+    """获取 TTS 性能指标"""
+    return {
+        "metrics": tts_manager.metrics.get_metrics(),
+        "stats": tts_manager.get_stats()
+    }

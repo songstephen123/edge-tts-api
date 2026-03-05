@@ -89,7 +89,9 @@ async def root():
         "endpoints": {
             "tts": "POST /tts - 文本转语音",
             "voices": "GET /voices - 获取音色列表",
-            "health": "GET /health - 健康检查"
+            "health": "GET /health - 健康检查",
+            "metrics": "GET /tts/metrics - 获取 TTS 性能指标",
+            "stats": "GET /tts/stats - 获取 TTS 引擎统计信息"
         }
     }
 

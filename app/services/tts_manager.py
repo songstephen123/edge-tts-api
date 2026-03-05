@@ -8,6 +8,7 @@ from collections import defaultdict
 from typing import Optional, List, TYPE_CHECKING
 
 from app.services.tts_providers.base import TTSProvider, TTSResult, TTSProviderError
+from app.services.metrics import TTSMetrics
 
 if TYPE_CHECKING:
     from app.config.tts_config import TTSConfig
@@ -32,6 +33,7 @@ class TTSManager:
         self._providers: List[TTSProvider] = []
         self._failure_counts: defaultdict[str, int] = defaultdict(int)
         self._disabled_until: dict[str, float] = {}
+        self.metrics = TTSMetrics()
         # 使用配置或默认值
         if config:
             self._failure_threshold = config.failure_threshold
@@ -165,6 +167,8 @@ class TTSManager:
         for provider in providers_to_try:
             try:
                 logger.debug(f"尝试使用提供者: {provider.name}")
+                self.metrics.record_request(provider.name)
+                start_time = time.time()
                 result = await provider.text_to_speech(
                     text=text,
                     voice=voice,
@@ -172,17 +176,21 @@ class TTSManager:
                     pitch=pitch,
                     volume=volume
                 )
+                duration = time.time() - start_time
+                self.metrics.record_success(provider.name, duration)
                 self._record_success(provider)
                 logger.info(f"成功使用 {provider.name} 生成语音")
                 return result
 
             except TTSProviderError as e:
                 last_error = e
+                self.metrics.record_failure(provider.name)
                 self._record_failure(provider)
                 logger.warning(f"提供者 {provider.name} 失败: {e}")
 
             except Exception as e:
                 last_error = e
+                self.metrics.record_failure(provider.name)
                 self._record_failure(provider)
                 logger.error(f"提供者 {provider.name} 发生意外错误: {e}")
 
