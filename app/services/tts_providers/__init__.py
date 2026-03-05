@@ -9,9 +9,11 @@ from app.services.tts_providers.base import (
     TTSProviderError,
     TTSResult
 )
+from app.services.tts_providers.edge_tts_provider import EdgeTTSProvider
 
 __all__ = [
     "TTSProvider",
     "TTSProviderError",
-    "TTSResult"
+    "TTSResult",
+    "EdgeTTSProvider",
 ]
