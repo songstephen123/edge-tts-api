@@ -154,9 +154,6 @@ class EdgeTTSProvider(TTSProvider):
                 cached=False
             )
 
-        except edge_tts.InvalidEdgeTTSError as e:
-            logger.error(f"Edge TTS invalid parameter: {e}")
-            raise TTSProviderError(f"Invalid TTS parameter: {e}") from e
         except Exception as e:
             logger.error(f"Edge TTS generation failed: {e}")
             raise TTSProviderError(f"TTS generation failed: {e}") from e
