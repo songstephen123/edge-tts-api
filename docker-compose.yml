@@ -22,6 +22,9 @@ services:
       - DEFAULT_RATE=${DEFAULT_RATE:-+0%}
       - DEFAULT_PITCH=${DEFAULT_PITCH:-+0Hz}
       - DEFAULT_VOLUME=${DEFAULT_VOLUME:-+0%}
+      - TTS_FAILURE_THRESHOLD=${TTS_FAILURE_THRESHOLD:-5}
+      - TTS_COOLDOWN_SECONDS=${TTS_COOLDOWN_SECONDS:-300}
+      - TTS_ENABLE_CACHE=${TTS_ENABLE_CACHE:-true}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
