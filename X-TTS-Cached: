@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+date: Thu, 05 Mar 2026 15:40:04 GMT
+server: uvicorn
+content-disposition: attachment; filename=de1ca907-730f-455b-847c-2625e413dffa.mp3
+content-length: 17712
+x-audio-filename: de1ca907-730f-455b-847c-2625e413dffa.mp3
+x-audio-format: mp3
+x-tts-provider: EdgeTTSProvider
+x-tts-cached: false
+access-control-expose-headers: X-Audio-Filename,X-Audio-Format,X-TTS-Provider,X-TTS-Cached,Content-Length
+content-type: audio/mpeg
+

@@ -10,12 +10,12 @@ from app.services.tts_providers.base import (
     TTSResult
 )
 from app.services.tts_providers.edge_tts_provider import EdgeTTSProvider
-# from app.services.tts_providers.local_provider import LocalTTSProvider  # 暂时禁用：需要 pyttsx3
+from app.services.tts_providers.local_provider import LocalTTSProvider
 
 __all__ = [
     "TTSProvider",
     "TTSProviderError",
     "TTSResult",
     "EdgeTTSProvider",
-    # "LocalTTSProvider",  # 暂时禁用：需要 pyttsx3
+    "LocalTTSProvider",
 ]
